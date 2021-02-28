@@ -124,7 +124,7 @@ const delRows = async (socket, data) => {
     const query = "DELETE FROM data WHERE id='"+data[i]+"'";
     con.query(query, (err, result, fields) => {
         if (err) throw err;
-    });  
+    });
   }
 
   const query1 = "select * from data order by id DESC";

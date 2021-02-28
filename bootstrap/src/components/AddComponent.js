@@ -8,15 +8,15 @@ import AdapterDateFns from '@material-ui/lab/AdapterDateFns';
 import LocalizationProvider from '@material-ui/lab/LocalizationProvider';
 import Box from '@material-ui/core/Box';
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 function AppCom(props) {
     const { store, setStore } = useContext(StoreContext);
     const [name, setName] = React.useState("");
     const [price, setPrice] = React.useState();
     const [res, setRes] = React.useState("");
-    const [startDate, setStart] = React.useState(new Date("2000-01-01").toISOString());
-    const [endDate, setEnd] = React.useState(new Date().toISOString());
-
+    const [endDate, setEnd] = React.useState(new Date());
+    const [startDate, setStartDate] = React.useState(new Date());
     const [value, setValue] = React.useState([null, null]);
     const add = ()=>{
         if(!name){
@@ -37,14 +37,6 @@ function AppCom(props) {
         props.addS({name: name, price: price, res_name: res})
         
     }
-    const handleSelect = (d)=>{
-        console.log(d)
-    }
-    const selectionRange = {
-        startDate: new Date("01-01-2021"),
-        endDate: new Date(),
-        key: "selection"
-    }
 
   return (
     <Table>
@@ -53,27 +45,14 @@ function AppCom(props) {
                 <td>
                     Filter Date
                 </td>
-                <td></td>
-                <td colSpan="2">
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <StaticDateRangePicker
-                        displayStaticWrapperAs="desktop"
-                        value={value}
-                        onChange={(newValue) => {
-                            setValue(newValue)
-                            props.filterWithDate(newValue)
-                        }}
-                        renderInput={(startProps, endProps) => (
-                        <React.Fragment>
-                            <TextField {...startProps} variant="standard" />
-                            <Box sx={{ mx: 2 }}> to </Box>
-                            <TextField {...endProps} variant="standard" />
-                        </React.Fragment>
-                        )}
-                    />
-                </LocalizationProvider>
+                <td>
+                    <DatePicker selected={startDate} onChange={date => {setStartDate(date);  props.filterWithDate([date, endDate])}} />
                 </td>
-                <td><Button variant="success" onClick={()=>{console.log("reset"); setValue([null, null]); props.getData()}}>Reset</Button>{' '}</td>
+                <td>
+                    <DatePicker selected={endDate} onChange={date => {setEnd(date);  props.filterWithDate([startDate, date]);} } />
+                </td>
+                <td><Button variant="success" onClick={()=>{console.log("reset"); props.filterWithDate([startDate, endDate])}}>Search</Button>{' '}</td>
+                <td><Button variant="primary" onClick={()=>{console.log("reset"); props.getData()}}>Reset</Button>{' '}</td>
             </tr>
             <tr>
                 <td><Form.Control type="text" value={name} onChange={(t)=>{setName(t.target.value)}} placeholder="Product Name" /></td>
