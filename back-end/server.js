@@ -41,6 +41,14 @@ io.on("connection", function(socket) {
   socket.on("DelRows", function(data) {
     delRows(socket, data)
   });
+
+  socket.on("FilterDate", function(data) {
+    filter(socket, data)
+  });
+
+  socket.on("GetDate", function() {
+    getData(socket)
+  });
   
 });
 
@@ -124,5 +132,14 @@ const delRows = async (socket, data) => {
     if (err) throw err;
     socket.emit("FromAPI", result);
     socket.broadcast.emit("FromAPI", result);
+  });
+};
+
+const filter = async (socket, data) => {
+  const query1 = "select * from `data` where `created_at` >= '"+data[0].toString()+"' and `created_at` <= '"+data[1].toString()+"'  order by id DESC";
+  console.log(query1)
+  con.query(query1, (err, result, fields) => {
+    if (err) throw err;
+    socket.emit("FromAPI", result);
   });
 };

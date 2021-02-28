@@ -10,6 +10,7 @@ import TableCom from './components/TableComponent'
 import io from 'socket.io-client';
 import { Button, Modal } from 'react-bootstrap';
 import StoreContext from "./context/index";
+
 function App() {
   const ENDPOINT = "http://127.0.0.1:4001";
   const { store, setStore } = useContext(StoreContext);
@@ -62,32 +63,42 @@ function App() {
     setShow(false)
   }
 
+  const filterWithDate = (d)=>{
+    if(d[0] == d[1]){
+      getData()
+    }
+    socketClient.emit("FilterDate", [new Date(d[0]), new Date(d[1])])
+  }
+
+  const getData = ()=>{
+    socketClient.emit("GetDate")
+  }
+  
   const delSelectedRow = () =>{
     console.log("dele rows", selectedRows)
     socketClient.emit("DelRows", selectedRows)
     setRows([])
   }
+  
   return (
     <div className="App">
       {
         show?<div className="Modal-container" onClick={()=>{setShow(false)}} >
-        <Modal.Dialog onHide={()=>{setShow(false)}}>
-          <Modal.Header>
-            <Modal.Title>Are you sure to delete this row?</Modal.Title>
-          </Modal.Header>
+          <Modal.Dialog onHide={()=>{setShow(false)}}>
+            <Modal.Header>
+              <Modal.Title>Are you sure to delete this row?</Modal.Title>
+            </Modal.Header>
 
-          <Modal.Footer>
-            <Button variant="secondary" onClick={()=>{setShow(false)}}>No</Button>
-            <Button variant="danger" onClick={removeDatatoS}>Yes</Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-      </div>:null
+            <Modal.Footer>
+              <Button variant="secondary" onClick={()=>{setShow(false)}}>No</Button>
+              <Button variant="danger" onClick={removeDatatoS}>Yes</Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </div>:null
       }
       
       <header className="App-header">
-      
-
-        <AppCom addS = {AddtoS} deleteRow = {delSelectedRow} rows = {selectedRows} />
+        <AppCom addS = {AddtoS} deleteRow = {delSelectedRow} filterWithDate={filterWithDate} rows = {selectedRows} getData= {getData} />
         <TableCom edit={EdittoS} selectCheck={setRows} rows = {selectedRows} />
       </header>
     </div>

@@ -37,7 +37,6 @@ function TableCom(props) {
           message: 'Price should bigger than 0'
         };
       }
-      
       return true;
     }
   },{
@@ -87,13 +86,6 @@ function TableCom(props) {
         data={ store } 
         columns={ columns }
         tabIndexCell
-        selectRow={ 
-          {
-            mode: 'checkbox',
-            onSelect: handleOnSelect,
-            onSelectAll: handleOnSelectAll
-          }
-        }
         cellEdit={ cellEditFactory({ 
             mode: 'dbclick',
             blurToSave: true,
