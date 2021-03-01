@@ -11,13 +11,11 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 function AppCom(props) {
-    const { store, setStore } = useContext(StoreContext);
     const [name, setName] = React.useState("");
     const [price, setPrice] = React.useState();
     const [res, setRes] = React.useState("");
     const [endDate, setEnd] = React.useState(new Date());
     const [startDate, setStartDate] = React.useState(new Date());
-    const [value, setValue] = React.useState([null, null]);
     const add = ()=>{
         if(!name){
             alert("Please insert a name")
@@ -46,7 +44,6 @@ function AppCom(props) {
             <td>From Date</td>
             <td>To Date</td>
             <td></td>
-            <td></td>
             </tr>
             <tr>
                 <td>
@@ -58,8 +55,7 @@ function AppCom(props) {
                 <td>
                     <DatePicker selected={endDate} onChange={date => {setEnd(date);  props.filterWithDate([startDate, date]);} } />
                 </td>
-                <td><Button variant="success" onClick={()=>{console.log("reset"); props.filterWithDate([startDate, endDate])}}>Search</Button>{' '}</td>
-                <td><Button variant="primary" onClick={()=>{console.log("reset"); props.getData()}}>Reset</Button>{' '}</td>
+                <td><Button variant="primary" onClick={()=>{console.log("reset");setEnd(new Date()); setStartDate(new Date()); props.getData()}}>Reset</Button>{' '}</td>
             </tr>
             <tr>
                 <td><Form.Control type="text" value={name} onChange={(t)=>{setName(t.target.value)}} placeholder="Product Name" /></td>
