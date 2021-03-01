@@ -42,6 +42,13 @@ function AppCom(props) {
     <Table>
         <tbody>
             <tr>
+            <td></td>
+            <td>From Date</td>
+            <td>To Date</td>
+            <td></td>
+            <td></td>
+            </tr>
+            <tr>
                 <td>
                     Filter Date
                 </td>
