@@ -1,12 +1,6 @@
 
 import { Button, Table, Form  } from 'react-bootstrap';
-import React, {useContext} from 'react';
-import StoreContext from "../context/index";
-import TextField from '@material-ui/core/TextField';
-import StaticDateRangePicker from '@material-ui/lab/StaticDateRangePicker';
-import AdapterDateFns from '@material-ui/lab/AdapterDateFns';
-import LocalizationProvider from '@material-ui/lab/LocalizationProvider';
-import Box from '@material-ui/core/Box';
+import React from 'react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -25,15 +19,10 @@ function AppCom(props) {
             alert("Please insert correct price")
             return false
         }
-        if(!res){
-            alert("Please insert a restaurant name")
-            return false
-        }
         setName("")
         setPrice("")
         setRes('')
         props.addS({name: name, price: price, res_name: res})
-        
     }
 
   return (
@@ -58,14 +47,13 @@ function AppCom(props) {
                 <td><Button variant="primary" onClick={()=>{console.log("reset");setEnd(new Date()); setStartDate(new Date()); props.getData()}}>Reset</Button>{' '}</td>
             </tr>
             <tr>
+                <td></td>
                 <td><Form.Control type="text" value={name} onChange={(t)=>{setName(t.target.value)}} placeholder="Product Name" /></td>
                 <td><Form.Control type="number" value={price} onChange={(t)=>{setPrice(t.target.value)}} placeholder="Product Price" /></td>
-                <td><Form.Control type="text" value={res} onChange={(t)=>{setRes(t.target.value)}} placeholder="Restaurant Name" /></td>
                 <td><Button variant="success" onClick={add}>Add</Button>{' '}</td>
                 {
                     props?.rows?.length?<td><Button variant="success" onClick={props.deleteRow}>Deleted</Button>{' '}</td>:null
                 }
-            
             </tr>
         </tbody>
     </Table>

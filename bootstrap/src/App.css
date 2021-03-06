@@ -1,3 +1,6 @@
+* {
+  font-size: 14px!important;
+}
 .App {
   text-align: center;
 }
@@ -22,4 +25,23 @@
   position: fixed;
   background: rgba(0, 0, 0, 0.5);
   z-index: 100;
+}
+
+.action-button {
+  margin-right: 10px;
+}
+
+.ct-toast-success {
+  color: 'white'!important;
+  background: rgba(100, 100, 100, 0.9)!important;
+  width: 40vw!important;
+}
+
+.ct-text {
+	font-size: 20px!important;
+  color: #fff!important;
+}
+
+.ct-group {
+	width: 40vw!important;
 }

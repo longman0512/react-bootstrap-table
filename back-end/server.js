@@ -74,47 +74,76 @@ const getData = socket => {
   });
 };
 
-const addData = (socket, data) => {
+const addData = async (socket, data) => {
   const query = "INSERT INTO data (name, price, res_name) VALUES ('" + data.name + "', '"+data.price+"', '"+data.res_name+"')";
-  con.query(query, (err, result, fields) => {
+  var updated = ''
+  await con.query(query, (err, result, fields) => {
     if (err) throw err;
-  });
-
-  const query1 = "select * from data order by id DESC";
-  con.query(query1, (err, result, fields) => {
-    if (err) throw err;
-    socket.emit("FromAPI", result);
-    socket.broadcast.emit("FromAPI", result);
-  });
-};
-
-const removeData = (socket, id) => {
-  const query = "DELETE FROM data WHERE id='"+id+"'";
-  console.log("remove", id)
-  con.query(query, (err, result, fields) => {
-      if (err) throw err;
+    updated = result.insertId
   });
   
   const query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
     if (err) throw err;
     socket.emit("FromAPI", result);
-    socket.broadcast.emit("FromAPI", result);
+    socket.broadcast.emit("FromAPI", result, 
+    {
+      type: 'add',
+      updatedId: updated, 
+      msg: 'The row {'+updated+'} has been added!'
+    });
+  });
+};
+
+const removeData = async (socket, id) => {
+  var origin_data = []
+  var query1 = "select * from data order by id DESC";
+  con.query(query1, (err, result, fields) => {
+    if (err) throw err;
+    origin_data = result
+  });
+
+  const query = "DELETE FROM data WHERE id='"+id+"'";
+  var updated = ''
+  await con.query(query, (err, result, fields) => {
+      if (err) throw err;
+      console.log(result)
+  });
+  
+  query1 = "select * from data order by id DESC";
+  con.query(query1, (err, result, fields) => {
+    if (err) throw err;
+    socket.emit("FromAPI", result);
+    socket.broadcast.emit("FromAPI", origin_data,
+    {
+      type: 'delete',
+      updatedId: id, 
+      msg: 'The row {'+id+'} has been eliminated!'
+    });
   });
 };
 
 const editData = async (socket, data) => {
+  var updated = ''
   console.log(data)
-  const query = "UPDATE data SET name='"+data.name+"', price='"+data.price+"', res_name='"+data.res_name+"' WHERE id='"+data.org_id+"'";
+  const query = "UPDATE data SET name='"+data.data.name+"', price='"+data.data.price+"', res_name='"+data.data.res_name+"' WHERE id='"+data.data.org_id+"'";
   await con.query(query, (err, result, fields) => {
       if (err) throw err;
+      console.log(result)
   });
   
   const query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
     if (err) throw err;
     socket.emit("FromAPI", result);
-    socket.broadcast.emit("FromAPI", result);
+    socket.broadcast.emit("FromAPI", result,
+    {
+      type: 'edit',
+      updatedId: data.data.org_id,
+      id: data.data.id,
+      updatedColumn: data.update_filed,
+      msg: 'The row {'+data.data.org_id+'} has been edited!'
+    });
   });
 };
 

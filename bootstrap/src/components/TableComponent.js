@@ -1,29 +1,59 @@
+/* eslint-disable no-undef */
+/* eslint-disable array-callback-return */
+/* eslint-disable eqeqeq */
+/* eslint-disable no-unused-vars */
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import BootstrapTable from 'react-bootstrap-table-next';
 import cellEditFactory from 'react-bootstrap-table2-editor';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import StoreContext from "../context/index";
-import { Button } from 'react-bootstrap';
 import React, {useContext, useState} from 'react';
 import { removeData } from 'jquery';
+import { unstable_useId } from '@material-ui/utils';
 
 function TableCom(props) {
   const { store, setStore } = useContext(StoreContext);
   const [selected, setSeleted] = useState([]);
+  const columnStyle =  (cell, row, rowIndex, colIndex) => {
+    if(typeof props.modiList!='undefined'){
+      var flag = false
+      props.modiList.map((modi, index)=>{
+        var modiColIndex = null
+        
+        if(modi.updatedId == row.org_id){
+          
+          columns.map((col, subindex)=>{
+
+            if(col.dataField == modi.updatedColumn){
+              modiColIndex = subindex
+            }
+          })
+          console.log(colIndex, modiColIndex)
+          if(colIndex == modiColIndex){
+            console.log("flag true")
+            flag = true
+          }
+        }
+      })
+      if(flag) return { color: 'red', fontWeight: 'bold'}
+    }
+  }
   const columns = [{
-    dataField: 'id',
-    text: 'ID',
-    sort: true
-  }, {
+    dataField: 'org_id',
+    text: 'DB_ID',
+    sort: true,
+    editable: (content, row, rowIndex, columnIndex) => false,
+  },{
     dataField: 'name',
     text: 'Name',
-    sort: true
+    sort: true,
+    style: columnStyle
   }, {
     dataField: 'price',
     text: 'Price',
     sort: true,
+    style: columnStyle,
     validator: (newValue, row, column) => {
-      console.log(newValue, "data")
 
       if (isNaN(newValue)) {
         return {
@@ -40,10 +70,6 @@ function TableCom(props) {
       return true;
     }
   },{
-    dataField: 'res_name',
-    text: 'Restaurant',
-    sort: true
-  },{
     dataField: 'created_at',
     text: 'Date',
     sort: true,
@@ -55,46 +81,50 @@ function TableCom(props) {
     sort: true,
     editable: (content, row, rowIndex, columnIndex) => false
   }];
-
-  const handleOnSelect = (row, isSelect) => {
-    if(typeof row== "undefined") return false
-    console.log(row)
-    if (isSelect) {
-      setSeleted([...selected, row.org_id])
-      props.selectCheck([...selected, row.org_id])
-    } else {
-      setSeleted(selected.filter(x => x !== row.org_id))
-      props.selectCheck(selected.filter(x => x !== row.org_id))
+  
+  const rowStyle = (row, rowIndex) => {
+    const style = {};
+      if(typeof props.modiList!='undefined'){
+        props.modiList.map((m, index)=>{
+          if (row.org_id == m.updatedId) {
+            if(m.type == 'add'){
+              style.backgroundColor = 'green';
+            } else if(m.type == 'edit'){
+              style.backgroundColor = 'yellow';
+              
+            } else if(m.type == 'delete'){
+              style.opacity = 0.3
+            }    
+          
+          }
+        })
     }
-  }
-
-  const handleOnSelectAll = (isSelect, rows) => {
-    if(typeof rows== "undefined") return false
-    const ids = rows.map(r => r.org_id);
-    if (isSelect) {
-      props.selectCheck(ids)
-      setSeleted(ids)
-    } else {
-      setSeleted(selected.filter(x => x !== row.org_id))
-      props.selectCheck(selected.filter(x => x !== row.org_id))
-    }
-  }
-
+    return style;
+  };
+  // const rowEvents = {
+  //   onClick: (e, row, rowIndex) => {
+  //     // props.readModify(row)
+  //   }
+  // };  
   return (
+    <>
     <BootstrapTable
-        keyField='id'
-        data={ store } 
+        keyField='org_id'
+        data={ store?.data?store.data:[] } 
         columns={ columns }
         tabIndexCell
         cellEdit={ cellEditFactory({ 
             mode: 'dbclick',
             blurToSave: true,
-            onStartEdit: (row, column, rowIndex, columnIndex) => { console.log('start to edit!!!'); },
+            onStartEdit: (row, column, rowIndex, columnIndex) => { props.readModify(row) },
             beforeSaveCell: (oldValue, newValue, row, column) => { console.log('Before Saving Cell!!'); },
-            afterSaveCell: (oldValue, newValue, row, column) => { props.edit(row) }
+            afterSaveCell: (oldValue, newValue, row, column) => { console.log(oldValue, newValue, row, column); if(oldValue!=newValue)props.edit(row, column.dataField) }
         }) }
+        // rowEvents={ rowEvents } 
+        rowStyle={rowStyle}
         pagination={ paginationFactory() } 
     />
+    </>
   );
 }
 
