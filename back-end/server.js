@@ -21,11 +21,14 @@ const io = require("socket.io")(server, {
     origin: '*',
   }
 }); // socket setup
+var connectCounter = 0;
 
 
 io.on("connection", function(socket) {
   getData(socket)
-
+  connectCounter++
+  
+  console.log("new connect"+connectCounter)
   socket.on("Delete", function(id) {
     removeData(socket, id)
   });
@@ -49,7 +52,14 @@ io.on("connection", function(socket) {
   socket.on("GetDate", function() {
     getData(socket)
   });
-  
+
+  socket.on("getItem", function(id) {
+    getItem(socket, id)
+  });
+  socket.on('disconnect',  function(){
+    connectCounter--
+    console.log("disconnect"+connectCounter)
+  })
 });
 
 
@@ -66,8 +76,19 @@ const con = mysql.createConnection({
 });
 con.connect();
 
+
+const getItem = (socket, id) => {
+  var query1 = "select * from `data` where id = "+id;
+  console.log(query1)
+  con.query(query1, (err, result, fields) => {
+    if (err) throw err;
+    socket.emit("willUpDateItem", result);
+  });
+}
+
 const getData = socket => {
   const query1 = "select * from data order by id DESC"
+  console.log("return data")
   con.query(query1, (err, result, fields) => {
     if (err) throw err;
     socket.emit("FromAPI", result);

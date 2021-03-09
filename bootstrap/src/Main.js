@@ -16,11 +16,13 @@ import { Button, Modal } from 'react-bootstrap';
 import StoreContext from "./context/index";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import cogoToast from 'cogo-toast';
+import { useHistory } from "react-router-dom";
+import { socketClient } from './socket';
 
 function Main() {
   const { store, setStore } = useContext(StoreContext);
-
-  const [socketClient, setSocket] = useState("");
+  const history = useHistory();
+  
   const [show, setShow] = useState(false);
   const [selectedRows, setRows] = useState([]);
   const [removalID, setRemove] = useState(0);
@@ -29,20 +31,24 @@ function Main() {
   const [tempData, setTempData] = useState([]);
   const [readItem, setReadItem] = useState([]);
   
-  const socket = io("http://127.0.0.1:4001");
+  // const socket = io("http://127.0.0.1:4001");
   useEffect(()=>{
     setDownloading(true)
-    socket.on("FromAPI", (data, modify) => {
-      setTempData({
-        data: data,
-        modify: modify
-      })
-    });
-    setSocket(socket)
+    console.log("connect socket")
+    // setSocket()
+    socketClient.emit("GetDate")
+    socketClient.off('FromAPI');
+    socketClient.on('FromAPI', getUpdatedData)
   }, [])
   
   useEffect(()=>{
-    const {data, modify} = tempData
+    return () => {
+      // socketClient.disconnect()
+        // Anything in here is fired on component unmount.
+    }
+  }, [])  
+
+  const getUpdatedData = (data, modify)=>{
     setDownloading(true)
     if(typeof data == 'undefined') return false
     let temp = []
@@ -55,12 +61,18 @@ function Main() {
         res_name: d.res_name,
         created_at: d.created_at.substring(0, 10),
         action: [
-          <Button variant="primary" size={"sm"} className="action-button">View</Button>,
-          <Button variant="warning" size={"sm"} className="action-button">Update</Button>,
+          <Button variant="warning" size={"sm"} className="action-button" onClick={()=>{updateData(d)}}>Update</Button>,
           <Button variant="danger" size={"sm"} className="action-button" onClick={()=>confirmRemove(d.id)}>Delete</Button>
       ]
       })
     })
+    const updateData = (data) => {
+      setStore({
+        ...store,
+        willUpdateItem: data
+      })
+      history.push('/update/'+data.id);
+    }
     setTempData(temp)
     if(typeof modify != 'undefined'){
       var modi_temp = []
@@ -104,15 +116,17 @@ function Main() {
     setTimeout(()=>{
       setDownloading(false)
     }, 500)
-  }, [tempData])
-
+  }
+  
   const AddtoS = (data)=>{
     // console.log(data)
+    // emitEvent("Add", data)
     socketClient.emit("Add", data)
   }
 
   const EdittoS = (data, ttt)=>{
     // console.log({data: data, update_filed: ttt}, "edit data table")
+    // emitEvent("Edit", {data: data, update_filed: ttt})
     socketClient.emit("Edit",{data: data, update_filed: ttt})
   }
 
@@ -122,6 +136,7 @@ function Main() {
   }
   
   const removeDatatoS = ()=>{
+    // emitEvent("Delete", removalID)
     socketClient.emit("Delete", removalID)
     setShow(false)
   }
@@ -130,6 +145,7 @@ function Main() {
     if(d[0] == d[1]){
       getData()
     }
+    // emitEvent("FilterDate", [new Date(d[0]), new Date(d[1])])
     socketClient.emit("FilterDate", [new Date(d[0]), new Date(d[1])])
   }
 
@@ -139,6 +155,7 @@ function Main() {
   
   const delSelectedRow = () =>{
     // // console.log("dele rows", selectedRows)
+    // emitEvent("DelRows", selectedRows)
     socketClient.emit("DelRows", selectedRows)
     setRows([])
   }
@@ -183,7 +200,6 @@ function Main() {
             downloading?<div style={{position: 'fixed', width: '100vw', height: '100vh', display: 'flex', justifyContent: "center", alignItems: "center", backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 200}}><CircularProgress style={{zIndex: 201, color: "white"}}/></div>:null
         }
       <header className="App-header">
-        <div onClick={()=>{readModify({})}}>asdfasdf</div>
         <AppCom addS = {AddtoS} deleteRow = {delSelectedRow} filterWithDate={filterWithDate} rows = {selectedRows} getData= {getData} />
         <TableCom edit={EdittoS} selectCheck={setRows} rows = {selectedRows} modiList = {modiList} readModify= {readModify}/>
       </header>

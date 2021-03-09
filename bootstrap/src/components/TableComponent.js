@@ -14,6 +14,7 @@ import { unstable_useId } from '@material-ui/utils';
 function TableCom(props) {
   const { store, setStore } = useContext(StoreContext);
   const [selected, setSeleted] = useState([]);
+
   const columnStyle =  (cell, row, rowIndex, colIndex) => {
     if(typeof props.modiList!='undefined'){
       var flag = false
@@ -21,18 +22,24 @@ function TableCom(props) {
         var modiColIndex = null
         
         if(modi.updatedId == row.org_id){
+          // modi.updatedColumn.map((moCol, index)=>{
+          //   columns.map((col, subindex)=>{
+          //     console.log(col.dataField)
+          //     if(col.dataField == moCol){
+          //       modiColIndex = subindex
+          //       console.log(modiColIndex, moCol)
+          //     }
+          //   })
+          // })
+          console.log("data filed", columns[colIndex].dataField)
           
-          columns.map((col, subindex)=>{
-
-            if(col.dataField == modi.updatedColumn){
-              modiColIndex = subindex
-            }
-          })
-          console.log(colIndex, modiColIndex)
-          if(colIndex == modiColIndex){
-            console.log("flag true")
+          if(modi?.updatedColumn?.indexOf(columns[colIndex].dataField) >= 0){
             flag = true
           }
+          // if(colIndex == modiColIndex){
+          //   console.log("flag true",)
+          //   flag = true
+          // }
         }
       })
       if(flag) return { color: 'red', fontWeight: 'bold'}
@@ -47,11 +54,13 @@ function TableCom(props) {
     dataField: 'name',
     text: 'Name',
     sort: true,
+    editable: (content, row, rowIndex, columnIndex) => false,
     style: columnStyle
   }, {
     dataField: 'price',
     text: 'Price',
     sort: true,
+    editable: (content, row, rowIndex, columnIndex) => false,
     style: columnStyle,
     validator: (newValue, row, column) => {
 
@@ -105,7 +114,7 @@ function TableCom(props) {
   //   onClick: (e, row, rowIndex) => {
   //     // props.readModify(row)
   //   }
-  // };  
+  // }; 
   return (
     <>
     <BootstrapTable
@@ -119,7 +128,7 @@ function TableCom(props) {
             onStartEdit: (row, column, rowIndex, columnIndex) => { props.readModify(row) },
             beforeSaveCell: (oldValue, newValue, row, column) => { console.log('Before Saving Cell!!'); },
             afterSaveCell: (oldValue, newValue, row, column) => { console.log(oldValue, newValue, row, column); if(oldValue!=newValue)props.edit(row, column.dataField) }
-        }) }
+        })}
         // rowEvents={ rowEvents } 
         rowStyle={rowStyle}
         pagination={ paginationFactory() } 
