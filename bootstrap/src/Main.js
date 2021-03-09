@@ -31,24 +31,15 @@ function Main() {
   const [tempData, setTempData] = useState([]);
   const [readItem, setReadItem] = useState([]);
   
-  // const socket = io("http://127.0.0.1:4001");
   useEffect(()=>{
     setDownloading(true)
-    console.log("connect socket")
-    // setSocket()
     socketClient.emit("GetDate")
     socketClient.off('FromAPI');
     socketClient.on('FromAPI', getUpdatedData)
   }, [])
-  
-  useEffect(()=>{
-    return () => {
-      // socketClient.disconnect()
-        // Anything in here is fired on component unmount.
-    }
-  }, [])  
 
   const getUpdatedData = (data, modify)=>{
+    // when user get data from server, you have to set downloading flag as true using setDownloading(true)
     setDownloading(true)
     if(typeof data == 'undefined') return false
     let temp = []
@@ -113,20 +104,18 @@ function Main() {
           modified: store.modified
       })
     }
+
+    // when the all data are download, you have to set the downloading flag as false to disappear the lazy loading layer using setDownloading(false)
     setTimeout(()=>{
       setDownloading(false)
     }, 500)
   }
   
   const AddtoS = (data)=>{
-    // console.log(data)
-    // emitEvent("Add", data)
     socketClient.emit("Add", data)
   }
 
   const EdittoS = (data, ttt)=>{
-    // console.log({data: data, update_filed: ttt}, "edit data table")
-    // emitEvent("Edit", {data: data, update_filed: ttt})
     socketClient.emit("Edit",{data: data, update_filed: ttt})
   }
 
@@ -136,7 +125,6 @@ function Main() {
   }
   
   const removeDatatoS = ()=>{
-    // emitEvent("Delete", removalID)
     socketClient.emit("Delete", removalID)
     setShow(false)
   }
@@ -145,7 +133,6 @@ function Main() {
     if(d[0] == d[1]){
       getData()
     }
-    // emitEvent("FilterDate", [new Date(d[0]), new Date(d[1])])
     socketClient.emit("FilterDate", [new Date(d[0]), new Date(d[1])])
   }
 
@@ -154,8 +141,6 @@ function Main() {
   }
   
   const delSelectedRow = () =>{
-    // // console.log("dele rows", selectedRows)
-    // emitEvent("DelRows", selectedRows)
     socketClient.emit("DelRows", selectedRows)
     setRows([])
   }
@@ -171,17 +156,10 @@ function Main() {
   }, [readItem])
   const readModify = (item) =>  {
     setReadItem(item)
-    // var temp = []
-    // modiList.map((modi, index)=>{
-    //   // console.log(modi.updatedId, item.org_id)
-    //   if(modi.updatedId != item.org_id){
-    //     temp.push(modi)
-    //   }
-    // })
-    // setModiList(temp)
   }
   return (
     <div className="App">
+      {/* this is confirm component when user delete one row */}
       {
         show?<div className="Modal-container" onClick={()=>{setShow(false)}} >
           <Modal.Dialog onHide={()=>{setShow(false)}}>
@@ -196,15 +174,28 @@ function Main() {
           </Modal.Dialog>
         </div>:null
       }
-        {
-            downloading?<div style={{position: 'fixed', width: '100vw', height: '100vh', display: 'flex', justifyContent: "center", alignItems: "center", backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 200}}><CircularProgress style={{zIndex: 201, color: "white"}}/></div>:null
-        }
+      {
+          // downloading?<div style={styles.loadingContainer}><CircularProgress style={{zIndex: 201, color: "white"}}/></div>:null
+      }
       <header className="App-header">
         <AppCom addS = {AddtoS} deleteRow = {delSelectedRow} filterWithDate={filterWithDate} rows = {selectedRows} getData= {getData} />
         <TableCom edit={EdittoS} selectCheck={setRows} rows = {selectedRows} modiList = {modiList} readModify= {readModify}/>
       </header>
     </div>
   );
+}
+
+const styles = {
+  loadingContainer: {
+      position: 'fixed', 
+      width: '100vw', 
+      height: '100vh', 
+      display: 'flex', 
+      justifyContent: "center", 
+      alignItems: "center", 
+      backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+      zIndex: 200
+  }
 }
 
 export default Main;

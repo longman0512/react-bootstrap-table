@@ -22,29 +22,36 @@ function TableCom(props) {
         var modiColIndex = null
         
         if(modi.updatedId == row.org_id){
-          // modi.updatedColumn.map((moCol, index)=>{
-          //   columns.map((col, subindex)=>{
-          //     console.log(col.dataField)
-          //     if(col.dataField == moCol){
-          //       modiColIndex = subindex
-          //       console.log(modiColIndex, moCol)
-          //     }
-          //   })
-          // })
-          console.log("data filed", columns[colIndex].dataField)
           
           if(modi?.updatedColumn?.indexOf(columns[colIndex].dataField) >= 0){
             flag = true
           }
-          // if(colIndex == modiColIndex){
-          //   console.log("flag true",)
-          //   flag = true
-          // }
         }
       })
       if(flag) return { color: 'red', fontWeight: 'bold'}
     }
   }
+
+  const rowStyle = (row, rowIndex) => {
+    const style = {};
+      if(typeof props.modiList!='undefined'){
+        props.modiList.map((m, index)=>{
+          if (row.org_id == m.updatedId) {
+            if(m.type == 'add'){
+              style.backgroundColor = 'green';
+            } else if(m.type == 'edit'){
+              style.backgroundColor = 'yellow';
+              
+            } else if(m.type == 'delete'){
+              style.opacity = 0.3
+            }    
+          
+          }
+        })
+    }
+    return style;
+  };
+
   const columns = [{
     dataField: 'org_id',
     text: 'DB_ID',
@@ -90,31 +97,12 @@ function TableCom(props) {
     sort: true,
     editable: (content, row, rowIndex, columnIndex) => false
   }];
-  
-  const rowStyle = (row, rowIndex) => {
-    const style = {};
-      if(typeof props.modiList!='undefined'){
-        props.modiList.map((m, index)=>{
-          if (row.org_id == m.updatedId) {
-            if(m.type == 'add'){
-              style.backgroundColor = 'green';
-            } else if(m.type == 'edit'){
-              style.backgroundColor = 'yellow';
-              
-            } else if(m.type == 'delete'){
-              style.opacity = 0.3
-            }    
-          
-          }
-        })
+
+  const rowEvents = {
+    onClick: (e, row, rowIndex) => {
+      props.readModify(row)
     }
-    return style;
-  };
-  // const rowEvents = {
-  //   onClick: (e, row, rowIndex) => {
-  //     // props.readModify(row)
-  //   }
-  // }; 
+  }; 
   return (
     <>
     <BootstrapTable
@@ -125,11 +113,11 @@ function TableCom(props) {
         cellEdit={ cellEditFactory({ 
             mode: 'dbclick',
             blurToSave: true,
-            onStartEdit: (row, column, rowIndex, columnIndex) => { props.readModify(row) },
+            onStartEdit: (row, column, rowIndex, columnIndex) => { console.log("start edit") },
             beforeSaveCell: (oldValue, newValue, row, column) => { console.log('Before Saving Cell!!'); },
             afterSaveCell: (oldValue, newValue, row, column) => { console.log(oldValue, newValue, row, column); if(oldValue!=newValue)props.edit(row, column.dataField) }
         })}
-        // rowEvents={ rowEvents } 
+        rowEvents={ rowEvents } 
         rowStyle={rowStyle}
         pagination={ paginationFactory() } 
     />

@@ -33,12 +33,6 @@ function Update(props) {
     console.log(socketClient._callbacks, "callbacks = ===============")
   }, [])
 
-  useEffect(()=>{
-    return () => {
-        // socketClient.disconnect()
-        // Anything in here is fired on component unmount.
-    }
-  }, [])
   const getUpdatedData = (data, modify) => {
     console.log(data, modify)
     if(typeof modify != "undefined"){
@@ -85,13 +79,12 @@ function Update(props) {
             return false
         }
         socketClient.emit("Edit",{data: data, update_filed: temp})
-
     }
     
   return (
     <div className="App">
         {
-            downloading?<div style={{position: 'fixed', width: '100vw', height: '100vh', display: 'flex', justifyContent: "center", alignItems: "center", backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 200}}><CircularProgress style={{zIndex: 201, color: "white"}}/></div>:null
+            // downloading?<div style={styles.loadingContainer}><CircularProgress style={{zIndex: 201, color: "white"}}/></div>:null
         }
         <header className="App-header">
             <Paper variant="outlined">
@@ -99,13 +92,12 @@ function Update(props) {
                 {
                     deletedFlag?<h1 style={{color: 'red'}}>This row is eliminated</h1>:null
                 }
-                
-                <div style={{display: 'flex', flexDirection: 'row', justifyContent: "flex-end", alignItems: 'center'}}>
+                <div style={styles.mainBtnContainer}>
                     <div><Button variant="success" size={"sm"} className="action-button" onClick={updateAll} disabled={deletedFlag}>Save All</Button></div>
                     <div><Button variant="primary" size={"sm"} className="action-button" onClick = {()=>{history.push('/')}}>Back</Button></div>
                 </div>
-                <div style={{display: 'flex', flexDirection: 'row', justifyContent: "space-around", alignItems: 'center', marginTop: 20}}>
-                <div>
+                <div style={styles.mainDataContainer}>
+                    <div>
                         <InputGroup className="mb-3">
                             <InputGroup.Prepend>
                             <InputGroup.Text id="basic-addon1">Product Name</InputGroup.Text>
@@ -143,6 +135,32 @@ function Update(props) {
         </header>
     </div>
   );
+}
+
+const styles = {
+    loadingContainer: {
+        position: 'fixed', 
+        width: '100vw', 
+        height: '100vh', 
+        display: 'flex', 
+        justifyContent: "center", 
+        alignItems: "center", 
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+        zIndex: 200
+    },
+    mainBtnContainer: {
+        display: 'flex', 
+        flexDirection: 'row', 
+        justifyContent: "flex-end", 
+        alignItems: 'center'
+    },
+    mainDataContainer: {
+        display: 'flex', 
+        flexDirection: 'row', 
+        justifyContent: "space-around", 
+        alignItems: 'center', 
+        marginTop: 20
+    }
 }
 
 export default Update;
