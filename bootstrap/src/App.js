@@ -5,23 +5,28 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import Main from './Main'
-import Update from './Update'
+import Main from './pages/Main'
+import Update from './pages/Update'
 import { setSocket, onMessageReceived, emitEvent } from './socket';
-
+import PrimarySearchAppBar from './components/NavBar'
 export default function BasicExample() {
+ 
   return (
-    <Router>
-      <div>
-        <Switch>
-        <Route exact path="/">
-            <Main />
-        </Route>
-        <Route path="/update/:updateID">
-          <Update />
-        </Route>
-        </Switch>
-      </div>
-    </Router>
+    <>    
+      <PrimarySearchAppBar />
+      <Router>
+        <div>
+          <Switch>
+          <Route exact path="/">
+              
+              <Main />
+          </Route>
+          <Route path="/update/:updateID">
+            <Update />
+          </Route>
+          </Switch>
+        </div>
+      </Router>
+    </>
   );
 }

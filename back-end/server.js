@@ -1,17 +1,25 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
 const path = require("path");
-const { getHeapCodeStatistics } = require("v8");
 const app = express();
 const PORT = 4001;
+const router = require('./router/router');
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
-app.use(cookieParser());
-
-//setup server
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === 'OPTIONS') {
+      res.header("Access-Control-Allow-Methods", "PUT, POST, DELETE, GET");
+      return res.status(200).json({});
+  }
+  next();
+});
+app.use(router);
+// Ididn't use it now why I don't knwo how to use it I don't know too haha  but you must use multer to upload files to express
+//setup server Then Can I send string to express using formdata? yes, you can send form data and recieve it on node.js backend.
+// one second
 const server = app.listen(PORT, function() {
   console.log("server running: "+PORT);
 });
@@ -22,7 +30,6 @@ const io = require("socket.io")(server, {
   }
 }); // socket setup
 var connectCounter = 0;
-
 
 io.on("connection", function(socket) {
   getData(socket)
@@ -96,23 +103,54 @@ const getData = socket => {
 };
 
 const addData = async (socket, data) => {
-  const query = "INSERT INTO data (name, price, res_name) VALUES ('" + data.name + "', '"+data.price+"', '"+data.res_name+"')";
+  var query = "INSERT INTO data (name, price, res_name) VALUES ('" + data.name + "', '"+data.price+"', '"+data.res_name+"')";
   var updated = ''
   await con.query(query, (err, result, fields) => {
     if (err) throw err;
     updated = result.insertId
+    query = "INSERT INTO notifications (noti_content) VALUES ('The row "+updated+" has been added!')";
+    con.query(query, (err, result, fields) => {
+      if (err) throw err;
+    });
   });
   
   const query1 = "select * from data order by id DESC";
-  con.query(query1, (err, result, fields) => {
+
+  con.query(query1, async (err, result, fields) => {
     if (err) throw err;
-    socket.emit("FromAPI", result);
-    socket.broadcast.emit("FromAPI", result, 
-    {
-      type: 'add',
-      updatedId: updated, 
-      msg: 'The row {'+updated+'} has been added!'
-    });
+    
+
+    const query2 = "SELECT * FROM notifications ORDER BY noti_id DESC";
+
+    con.query(query2, (err, result1, fields)=>{
+      console.log(result1)
+      socket.emit("FromAPI", result, 
+      {
+        type: '',
+        updatedId: '', 
+        noti_num: result1,
+        msg: 'The row {'+updated+'} has been added!'
+      });
+
+      socket.broadcast.emit("FromAPI", result, 
+      {
+        type: 'add',
+        updatedId: updated, 
+        noti_num: result1,
+        msg: 'The row {'+updated+'} has been added!'
+      });
+
+
+      socket.emit("Noti", result, 
+      {
+        noti_num: result1
+      });
+
+      socket.broadcast.emit("Noti", result, 
+      {
+        noti_num: result1
+      });
+    })
   });
 };
 
@@ -124,47 +162,105 @@ const removeData = async (socket, id) => {
     origin_data = result
   });
 
-  const query = "DELETE FROM data WHERE id='"+id+"'";
+  var query = "DELETE FROM data WHERE id='"+id+"'";
+
   var updated = ''
   await con.query(query, (err, result, fields) => {
       if (err) throw err;
       console.log(result)
   });
   
+  query = "INSERT INTO notifications (`noti_content`) VALUES ('The row "+id+" has been eliminated!')";
+  await con.query(query, (err, result, fields) => {
+    if (err) throw err;
+    
+  });
+
   query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
     if (err) throw err;
-    socket.emit("FromAPI", result);
-    socket.broadcast.emit("FromAPI", origin_data,
-    {
-      type: 'delete',
-      updatedId: id, 
-      msg: 'The row {'+id+'} has been eliminated!'
-    });
+    // socket.emit("FromAPI", result);
+    
+    const query2 = "SELECT * FROM notifications ORDER BY noti_id DESC";
+
+    con.query(query2, (err, result1, fields)=>{
+      socket.emit("FromAPI", result, 
+      {
+        type: '',
+        updatedId: '', 
+        noti_num: result1,
+        msg: 'The row {'+id+'} has been eliminated!'
+      });
+      socket.broadcast.emit("FromAPI", origin_data,
+      {
+        type: 'delete',
+        updatedId: id,
+        noti_num: result1,
+        msg: 'The row {'+id+'} has been eliminated!'
+      });
+
+      socket.emit("Noti", result, 
+      {
+        noti_num: result1
+      });
+
+      socket.broadcast.emit("Noti", result, 
+      {
+        noti_num: result1
+      });
+    })
   });
 };
 
 const editData = async (socket, data) => {
   var updated = ''
   console.log(data)
-  const query = "UPDATE data SET name='"+data.data.name+"', price='"+data.data.price+"', res_name='"+data.data.res_name+"' WHERE id='"+data.data.org_id+"'";
+  var query = "UPDATE data SET name='"+data.data.name+"', price='"+data.data.price+"', res_name='"+data.data.res_name+"' WHERE id='"+data.data.org_id+"'";
   await con.query(query, (err, result, fields) => {
       if (err) throw err;
       console.log(result)
   });
-  
+
+  query = "INSERT INTO notifications (noti_content) VALUES ('The row "+data.data.org_id+" has been edited!')";
+  await con.query(query, (err, result, fields) => {
+    if (err) throw err;
+    
+  });
   const query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
     if (err) throw err;
     socket.emit("FromAPI", result);
-    socket.broadcast.emit("FromAPI", result,
-    {
-      type: 'edit',
-      updatedId: data.data.org_id,
-      id: data.data.id,
-      updatedColumn: data.update_filed,
-      msg: 'The row {'+data.data.org_id+'} has been edited!'
-    });
+
+    const query2 = "SELECT * FROM notifications ORDER BY noti_id DESC";
+    con.query(query2, (err, result1, fields)=>{
+      socket.emit("FromAPI", result, 
+      {
+        type: '',
+        updatedId: '', 
+        noti_num: result1,
+        msg: 'The row {'+data.data.org_id+'} has been edited!'
+      });
+      socket.broadcast.emit("FromAPI", result,
+      {
+        type: 'edit',
+        updatedId: data.data.org_id,
+        id: data.data.id,
+        updatedColumn: data.update_filed,
+        noti_num: result1,
+        msg: 'The row {'+data.data.org_id+'} has been edited!'
+      });
+
+      socket.emit("Noti", result, 
+      {
+        noti_num: result1
+      });
+
+      socket.broadcast.emit("Noti", result, 
+      {
+        noti_num: result1
+      });
+    })
+    
   });
 };
 

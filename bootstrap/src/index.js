@@ -1,5 +1,6 @@
 import App from './App';
 import React from 'react';
+import './App.css'
 import StoreContext from "./context/index";
 import ReactDOM from 'react-dom';
 import reportWebVitals from './reportWebVitals';
