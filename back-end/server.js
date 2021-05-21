@@ -5,6 +5,7 @@ const app = express();
 const PORT = 4001;
 const router = require('./router/router');
 
+app.use(express.static(path.join(__dirname, '/')));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use((req, res, next) => {
@@ -105,12 +106,27 @@ const getData = socket => {
 const addData = async (socket, data) => {
   var query = "INSERT INTO data (name, price, res_name) VALUES ('" + data.name + "', '"+data.price+"', '"+data.res_name+"')";
   var updated = ''
-  await con.query(query, (err, result, fields) => {
+  await con.query(query, async (err, result, fields) => {
     if (err) throw err;
     updated = result.insertId
     query = "INSERT INTO notifications (noti_content) VALUES ('The row "+updated+" has been added!')";
-    con.query(query, (err, result, fields) => {
+    con.query(query, async (err, result, fields) => {
       if (err) throw err;
+      query = "SELECT * from users";
+      var notiupdated = result;
+      await con.query(query, (err, result, fields) => {
+        if (err) throw err;
+        result.map(res=>{
+          if(data.userId != res.u_id){
+            query = "INSERT INTO user_notifications (`u_no_id`, `u_u_id`) VALUES ("+notiupdated.insertId+", "+res.u_id+")"
+            
+            con.query(query);
+          } else {
+            query = "INSERT INTO user_notifications (`u_no_id`, `u_u_id`, `clicked`) VALUES ("+notiupdated.insertId+", "+res.u_id+", 2)"
+            con.query(query);
+          }
+        })
+      });
     });
   });
   
@@ -121,21 +137,21 @@ const addData = async (socket, data) => {
     
 
     const query2 = "SELECT * FROM notifications ORDER BY noti_id DESC";
-
+    
     con.query(query2, (err, result1, fields)=>{
       console.log(result1)
-      socket.emit("FromAPI", result, 
-      {
-        type: '',
-        updatedId: '', 
-        noti_num: result1,
-        msg: 'The row {'+updated+'} has been added!'
-      });
-
       socket.broadcast.emit("FromAPI", result, 
       {
         type: 'add',
         updatedId: updated, 
+        noti_num: result1,
+        msg: 'The row {'+updated+'} has been added!'
+      });
+      
+      socket.emit("FromAPI", result, 
+      {
+        type: 'FromAPI',
+        updatedId: '', 
         noti_num: result1,
         msg: 'The row {'+updated+'} has been added!'
       });
@@ -154,7 +170,8 @@ const addData = async (socket, data) => {
   });
 };
 
-const removeData = async (socket, id) => {
+const removeData = async (socket, data) => {
+  console.log(data, '[remove data+++++++++++++++++++++++++++++++++++++++++');
   var origin_data = []
   var query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
@@ -162,7 +179,7 @@ const removeData = async (socket, id) => {
     origin_data = result
   });
 
-  var query = "DELETE FROM data WHERE id='"+id+"'";
+  var query = "DELETE FROM data WHERE id='"+data.id+"'";
 
   var updated = ''
   await con.query(query, (err, result, fields) => {
@@ -170,12 +187,28 @@ const removeData = async (socket, id) => {
       console.log(result)
   });
   
-  query = "INSERT INTO notifications (`noti_content`) VALUES ('The row "+id+" has been eliminated!')";
-  await con.query(query, (err, result, fields) => {
+  query = "INSERT INTO notifications (`noti_content`) VALUES ('The row "+data.id+" has been eliminated!')";
+  await con.query(query, async (err, result, fields) => {
     if (err) throw err;
-    
-  });
+    console.log(result, "deleted result");
+    query = "SELECT * from users";
+    updated = result;
+    await con.query(query, (err, result, fields) => {
+      if (err) throw err;
+      result.map(res=>{
+        if(data.userId != res.u_id){
+          query = "INSERT INTO user_notifications (`u_no_id`, `u_u_id`) VALUES ("+updated.insertId+", "+res.u_id+")"
+          console.log(query);
+          con.query(query);
+        } else {
+          query = "INSERT INTO user_notifications (`u_no_id`, `u_u_id`, `clicked`) VALUES ("+updated.insertId+", "+res.u_id+", 2)"
+          con.query(query);
+        }
+      })
+    });
 
+  });
+  
   query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
     if (err) throw err;
@@ -184,25 +217,25 @@ const removeData = async (socket, id) => {
     const query2 = "SELECT * FROM notifications ORDER BY noti_id DESC";
 
     con.query(query2, (err, result1, fields)=>{
-      socket.emit("FromAPI", result, 
-      {
-        type: '',
-        updatedId: '', 
-        noti_num: result1,
-        msg: 'The row {'+id+'} has been eliminated!'
-      });
-      socket.broadcast.emit("FromAPI", origin_data,
+      socket.broadcast.emit("FromAPI", result, 
       {
         type: 'delete',
-        updatedId: id,
+        updatedId: data.id, 
         noti_num: result1,
-        msg: 'The row {'+id+'} has been eliminated!'
+        msg: 'The row {'+data.id+'} has been eliminated!'
+      });
+      socket.emit("FromAPI", result,
+      {
+        type: 'delete',
+        updatedId: '',
+        noti_num: result1,
+        msg: 'The row {'+data.id+'} has been eliminated!'
       });
 
-      socket.emit("Noti", result, 
-      {
-        noti_num: result1
-      });
+      // socket.emit("Noti", result, 
+      // {
+      //   noti_num: result1
+      // });
 
       socket.broadcast.emit("Noti", result, 
       {
@@ -215,16 +248,30 @@ const removeData = async (socket, id) => {
 const editData = async (socket, data) => {
   var updated = ''
   console.log(data)
-  var query = "UPDATE data SET name='"+data.data.name+"', price='"+data.data.price+"', res_name='"+data.data.res_name+"' WHERE id='"+data.data.org_id+"'";
+  var query = "UPDATE data SET name='"+data.data.name+"', price='"+data.data.price+"' WHERE id='"+data.data.org_id+"'";
   await con.query(query, (err, result, fields) => {
       if (err) throw err;
       console.log(result)
   });
 
   query = "INSERT INTO notifications (noti_content) VALUES ('The row "+data.data.org_id+" has been edited!')";
-  await con.query(query, (err, result, fields) => {
+  await con.query(query, async (err, result, fields) => {
     if (err) throw err;
-    
+    query = "SELECT * from users";
+    updated = result;
+    await con.query(query, async (err, result, fields) => {
+      if (err) throw err;
+      result.map(res=>{
+        if(data.user.userId != res.u_id){
+          query = "INSERT INTO user_notifications (`u_no_id`, `u_u_id`) VALUES ("+updated.insertId+", "+res.u_id+")"
+          console.log(query);
+          con.query(query);
+        }else {
+          query = "INSERT INTO user_notifications (`u_no_id`, `u_u_id`, `clicked`) VALUES ("+updated.insertId+", "+res.u_id+", 2)"
+          con.query(query);
+        }
+      })
+    });
   });
   const query1 = "select * from data order by id DESC";
   con.query(query1, (err, result, fields) => {
@@ -235,7 +282,7 @@ const editData = async (socket, data) => {
     con.query(query2, (err, result1, fields)=>{
       socket.emit("FromAPI", result, 
       {
-        type: '',
+        type: 'edit',
         updatedId: '', 
         noti_num: result1,
         msg: 'The row {'+data.data.org_id+'} has been edited!'

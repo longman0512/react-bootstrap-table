@@ -3,29 +3,39 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  Redirect
 } from "react-router-dom";
 import Main from './pages/Main'
 import Update from './pages/Update'
+import Signin from './pages/Signin'
+import Signup from './pages/Signup'
 import { setSocket, onMessageReceived, emitEvent } from './socket';
 import PrimarySearchAppBar from './components/NavBar'
 export default function BasicExample() {
- 
+
   return (
-    <>    
-      <PrimarySearchAppBar />
+    <>
       <Router>
-        <div>
-          <Switch>
-          <Route exact path="/">
-              
-              <Main />
+        <Switch>
+          <Route path="/main">
+            <PrimarySearchAppBar />
+            <Main />
+          </Route>
+          <Route path="/signin">
+            <Signin />
           </Route>
           <Route path="/update/:updateID">
+            <PrimarySearchAppBar />
             <Update />
           </Route>
-          </Switch>
-        </div>
+          <Route path="/signup">
+            <Signup />
+          </Route>
+          <Route path="/*">
+            <Redirect to="signin" />
+          </Route>
+        </Switch>
       </Router>
     </>
   );

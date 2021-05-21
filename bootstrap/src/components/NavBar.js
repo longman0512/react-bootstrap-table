@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fade, makeStyles } from '@material-ui/core/styles';
+import { alpha, makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
@@ -11,7 +11,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
-import Autocomplete from '@material-ui/lab/Autocomplete'; 
+import Autocomplete from '@material-ui/lab/Autocomplete';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import CameraAltIcon from '@material-ui/icons/CameraAlt';
@@ -20,9 +20,13 @@ import CloseIcon from '@material-ui/icons/Close';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Box from '@material-ui/core/Box';
 import Popper from '@material-ui/core/Popper';
+import Slider from '@material-ui/core/Slider';
+import { useHistory } from "react-router-dom";
 import { getImageListItemUtilityClass } from '@material-ui/core';
-import { shadows } from '@material-ui/system';
+import cogoToast from 'cogo-toast';
 import Divider from '@material-ui/core/Divider';
+import RotateLeftIcon from '@material-ui/icons/RotateLeft'
+import RotateRightIcon from '@material-ui/icons/RotateRight'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import StoreContext from "../context/index";
 import Modal from '@material-ui/core/Modal';
@@ -33,13 +37,11 @@ import AvatarEditor from 'react-avatar-editor'
 import { socketClient } from '../socket';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import Tooltip from '@material-ui/core/Tooltip';
 import { FixedSizeList } from 'react-window';
 
 import Axios from 'axios';
-import axios from 'axios';
 Axios.defaults.baseURL = "http://127.0.0.1:4001/";
-
-import { signIn } from '../API';
 
 const useStyles = makeStyles((theme) => ({
   grow: {
@@ -47,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
   },
   menuButton: {
     marginRight: theme.spacing(2),
-    "& .MuiIconButton-edgeEnd":{
+    "& .MuiIconButton-edgeEnd": {
       marginRight: "0"
     },
   },
@@ -60,9 +62,9 @@ const useStyles = makeStyles((theme) => ({
   search: {
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
-    backgroundColor: fade(theme.palette.common.white, 0.15),
+    backgroundColor: alpha(theme.palette.common.white, 0.15),
     '&:hover': {
-      backgroundColor: fade(theme.palette.common.white, 0.25),
+      backgroundColor: alpha(theme.palette.common.white, 0.25),
     },
     color: "white",
     marginRight: theme.spacing(2),
@@ -84,11 +86,11 @@ const useStyles = makeStyles((theme) => ({
   },
   inputRoot: {
     color: "white",
-    "& .MuiAutocomplete-inputRoot":{
+    "& .MuiAutocomplete-inputRoot": {
       color: "white",
       paddingLeft: "60px",
     },
-    "& .MuiAutocomplete-inputRoot .MuiAutocomplete-input:first-child":{
+    "& .MuiAutocomplete-inputRoot .MuiAutocomplete-input:first-child": {
       color: "white",
       paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
     },
@@ -103,7 +105,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   iconCompany: {
-    "& .MuiSvgIcon-root":{
+    "& .MuiSvgIcon-root": {
       width: "1.5em",
       height: "1.5em"
     },
@@ -132,12 +134,12 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   accountModal: {
-      
+
   },
-  logoContainer : {
-      display: "flex",
-      justifyContent: 'center',
-      alignItems: 'center'
+  logoContainer: {
+    display: "flex",
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   NavBarlogoContent: {
     backgroundColor: "rgb(120, 144, 156)",
@@ -170,28 +172,28 @@ const useStyles = makeStyles((theme) => ({
     position: "relative"
   },
   avatarChgBtn: {
-      margin: 0,
-      padding: 5,
-      width: 40,
-      height: 40,
-      borderRadius: 40,
-      backgroundColor: 'white',
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      "&:hover": {
-        backgroundColor: 'rgba(150, 150, 150, 1)'
+    margin: 0,
+    padding: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 40,
+    backgroundColor: 'white',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    "&:hover": {
+      backgroundColor: 'rgba(150, 150, 150, 1)'
     },
   },
   avataBtnContainer: {
-      position: "absolute",
-      justifyContent: "space-between",
-      flexDirection: "row",
-      alignItems: "center",
-      display: 'flex',
-      bottom: 0, 
-      right: -50,
-      width: 90
+    position: "absolute",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "center",
+    display: 'flex',
+    bottom: 0,
+    right: -50,
+    width: 90
   },
   userNameContainer: {
     width: "100%",
@@ -200,32 +202,32 @@ const useStyles = makeStyles((theme) => ({
     alignItems: "center",
     flexDirection: "column",
     marginTop: 30
-},
-userNameSubContainer: {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  flexDirection: "column",
-},
+  },
+  userNameSubContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "column",
+  },
   userNameText: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: "black"
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "black"
   },
   userEmailText: {
     fontSize: 24,
     color: "gray"
   },
   manageAcctBtn: {
-      borderRadius: 20,
-      padding: 2,
-      borderWidth: 1,
-      borderColor: "gray",
-      borderStyle: "solid",
-      width: "80%",
-      color: "gray",
-      fontSize: 24,
-      cursor: "pointer"
+    borderRadius: 20,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderStyle: "solid",
+    width: "80%",
+    color: "gray",
+    fontSize: 24,
+    cursor: "pointer"
   },
   manageBtnContainer: {
     display: "flex",
@@ -259,9 +261,10 @@ userNameSubContainer: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative'
   },
   paper: {
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: "white",
     border: '2px solid #000',
     boxShadow: theme.shadows[5],
     padding: theme.spacing(2, 4, 3),
@@ -288,12 +291,26 @@ userNameSubContainer: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    width: 230
+    width: 230,
+  }, 
+  noDrag: {
+    color: 'gray',
+    marginTop: 30,
+    height: 30
+  },
+  onDrog: {
+    color: 'white',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform:' translate(-50%, -50%)',
+    backgroundColor:' #5050f9',
+    padding: 16
   }
 }));
 
 const user_email = 'user@user.com'
-
+const serverUrl = "http://localhost:4001/"
 export default function PrimarySearchAppBar() {
   const { store, setStore } = React.useContext(StoreContext);
   const classes = useStyles();
@@ -301,7 +318,7 @@ export default function PrimarySearchAppBar() {
   const [anchorEl2, setAnchorEl2] = React.useState(null);
   const [anchorNoti, setAnchorNoti] = React.useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
-//   const { user: currentUser } = useSelector((state) => state.auth);
+  //   const { user: currentUser } = useSelector((state) => state.auth);
   const [myOptions, setMyOptions] = useState([])
   const [acctModal, setAcctModal] = useState(false)
   const [notiModal, setNotiModal] = useState(false)
@@ -315,34 +332,183 @@ export default function PrimarySearchAppBar() {
   const [uploadState, setUploadState] = useState(0);
   const [nodifiedState, setNotified] = useState(0);
   const [notiNum, setNotiNum] = useState(0);
-  
+  const [newNoti, setNewNoti] = useState([]);
+  const [tempImage, setTempImage] = useState("");
+  const [rotate, setRotate] = useState(0);
+  const [zoom, setZoom] = useState(1.2);
+  const [uploadPercent, setUploadPercent] = useState(0);
+  const [isDropping, setDropping] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [page, setPageNum] = useState(0);
+
   const fileUploadRef = React.useRef(null);
+  const imageCrop = React.useRef(null);
+  const handleZoom = (event, newValue) => {
+    console.log(newValue)
+    if (newValue) {
+      setZoom(newValue)
+    }
+  }
 
-  React.useEffect(()=>{
-    Axios.post('signin', {user_email: user_email}).then((res) => {
+  const intinitScroll = (e) => {
+    console.log(e.target.scrollTop, e.target.offsetHeight, e.target.clientHeight, e.target.offsetTop);
+    // if(e.target.scrollTop > e.target.clientHeight){
+    //   Axios.post('getNoti', {pageNum: page+1}).then((res) => {
+    //     if (res.status === 200) {
+    //       console.log(res.data.data, "notification data")
+    //       if(res.data.data.length){
+    //         setNotified(res.data.data)
+    //         getNewNoti();
+    //         setPageNum(page+1)
+    //       }
+    //     }
+    //   }).catch((err) => {
+    //   });  
+    // } else if(e.target.scrollTop == 0){
+    //   if(page - 1 >= 0){
+    //     Axios.post('getNoti', {pageNum: page-1}).then((res) => {
+    //       if (res.status === 200) {
+    //         console.log(res.data.data, "notification data")
+    //         if(res.data.data.length){
+    //           setNotified(res.data.data)
+    //           getNewNoti();
+    //           setPageNum(page-1)
+    //         }
+    //       }
+    //     }).catch((err) => {
+    //     });
+    //   } else {
+    //     Axios.post('getNoti', {pageNum: 0}).then((res) => {
+    //       if (res.status === 200) {
+    //         console.log(res.data.data, "notification data")
+    //         if(res.data.data.length){
+    //           setNotified(res.data.data)
+    //           getNewNoti();
+    //           setPageNum(0)
+    //         }
+    //       }
+    //     }).catch((err) => {
+    //     });
+    //   }
+    // } 
+  }
+
+  const upDateuserInfo = () => {
+    Axios.post('getUserInfoById', {
+      user: userInfo
+    }).then((res) => {
       if (res.status === 200) {
-        console.log(res.data)
-        setUserInfo(res.data.data)
-      } else {
-
+        var userTempData = {
+          userId: res.data.data.u_id,
+          userEmail: res.data.data.u_email,
+          userAvatar: '',
+          userComAvatar: '',
+          userName: res.data.data.u_name,
+          userComName: res.data.data.u_company_name
+        };
+        var userRealData = {
+          userId: res.data.data.u_id,
+          userEmail: res.data.data.u_email,
+          userAvatar: res.data.data.u_avatar,
+          userComAvatar: res.data.data.u_com_avatar,
+          userName: res.data.data.u_name,
+          userComName: res.data.data.u_company_name
+        }
+        console.log(userRealData);
+        setUserInfo(userRealData);
+        setTimeout(()=>{
+          setUserInfo(userRealData);
+        }, 1000);
+        localStorage.setItem('bootstrap', JSON.stringify(userRealData));
+        
+        setTempImage("");
+        setImage("");
+        console.log("userProfile is updated");
       }
     }).catch((err) => {
     });
+  }
+  const openDeleteModal = (target) => {
+    setTargetImage(target)
+    setDeleteModal(true);
+  }
 
-    Axios.post('getNoti', {}).then((res) => {
+  const deleteImage = () => {
+    Axios.post('deleteAvatar', {
+      target: targetImage,
+      user: userInfo
+    }).then((res) => {
+      setDeleteModal(false);
+      if (res.status === 200) {
+        cogoToast.success("Image is removed")
+        upDateuserInfo()
+      }
+    }).catch((err) => {
+      setDeleteModal(false);
+    });
+  }
+
+  const uploadAvatar = () => {
+    console.log(imageCrop.current.getImage().toDataURL(), "imageData");
+    Axios.post('uploadavatar', {
+      image: imageCrop.current.getImage().toDataURL(),
+      target: targetImage,
+      user: userInfo
+    }, {
+      onUploadProgress: function (progressEvent) {
+        var percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        setUploadPercent(percentCompleted)
+      }
+    }).then((res) => {
+      setUploadPercent(0);
+      if (res.status === 200) {
+        cogoToast.success("upload is completed")
+        setUploadModal(false);
+        upDateuserInfo();
+      }
+    }).catch((err) => {
+      setUploadPercent(0);
+      setUploadModal(false);
+    });
+    // fetch(imageCrop.current.getImage().toDataURL()).then(res=>res.blob()).then(blob=>{
+    //   console.log(window.URL.createObjectURL(blob), "blob")
+    // })
+  }
+
+  const getNewNoti = () => {
+    var user = JSON.parse(localStorage.getItem('bootstrap'));
+    Axios.post('getNewNoti', { user }).then(res => {
+      console.log(res.data)
+      var num = 0;
+      res.data.data.map((item, index)=>{
+        if(!item.clicked){
+          num++;
+        }
+      })
+      setNotiNum(num);
+      setNewNoti(res.data.data)
+    })
+  }
+  const signout = () => {
+    localStorage.removeItem("bootstrap");
+    window.location = "/signin"
+  }
+  React.useEffect(() => {
+    window.addEventListener("dragover", function (e) {
+      e = e || event;
+      e.preventDefault();
+    }, false);
+    window.addEventListener("drop", function (e) {
+      e = e || event;
+      e.preventDefault();
+    }, false);
+    var user = JSON.parse(localStorage.getItem('bootstrap'));
+    setUserInfo(user);
+    Axios.post('getNoti', { pageNum: page }).then((res) => {
       if (res.status === 200) {
         console.log(res.data.data, "notification data")
         setNotified(res.data.data)
-        if(res.data.data){
-          var num = 0
-          res.data.data.map((noti, index)=>{
-            if(!noti.noti_read_at){
-              num++
-              console.log("noti")
-            }
-          })
-          setNotiNum(num)
-        }
+        getNewNoti();
       }
     }).catch((err) => {
     });
@@ -350,44 +516,42 @@ export default function PrimarySearchAppBar() {
     socketClient.on('Noti', getUpdatedData)
   }, [])
 
-  const getUpdatedData = (data, modify)=> {
+  const getUpdatedData = (data, modify) => {
     setNotified(modify.noti_num)
-    if(modify.noti_num){
-      var num = 0
-      modify.noti_num.map((noti, index)=>{
-        if(!noti.noti_read_at){
-          num++
-          console.log("noti")
-        }
-      })
-      setNotiNum(num)
+    if (modify.noti_num) {
+      getNewNoti();
     }
   }
   const handleProfileMenuOpen = (event) => {
+    setImage("")
+    setRotate(0)
     setAnchorEl(event.currentTarget);
     setAcctModal(!acctModal);
+  };
+
+  const openClick = (user) => {
+    console.log(user);
+    Axios.post('openNoti', user).then((res) => {
+      if (res.status === 200) {
+        console.log(res.data, "notification data")
+        getNewNoti();
+      }
+    }).catch((err) => {
+    });
   };
 
   const handleNotiMenuOpen = (event) => {
     setAnchorNoti(event.currentTarget);
     setNotiModal(!acctModal);
-    Axios.post('getNoti', {}).then((res) => {
+    Axios.post('getNoti', { pageNum: page }).then((res) => {
       if (res.status === 200) {
         console.log(res.data, "notification data")
         setNotified(res.data.data)
-        if(res.data.data){
-          var num = 0
-          res.data.data.map((noti, index)=>{
-            if(!noti.noti_read_at){
-              num++
-              console.log("noti")
-            }
-          })
-          setNotiNum(num)
-        }
       }
     }).catch((err) => {
     });
+    var user = JSON.parse(localStorage.getItem('bootstrap'));
+    openClick(user);
   };
 
   const handleMobileMenuClose = () => {
@@ -411,174 +575,260 @@ export default function PrimarySearchAppBar() {
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
   };
-  
+
   const menuId = 'primary-search-account-menu';
   const createId = 'primary-search-create-menu';
 
-  const openModal = (target)=>{
+  const openModal = (target) => {
     setTargetImage(target)
     setUploadModal(true)
   }
 
-  
-  const getDataFromAPI = () => { 
-    console.log("Options Fetched from API") 
-  
-    fetch('http://dummy.restapiexample.com/api/v1/employees').then((response) => { 
-      return response.json() 
-    }).then((res) => { 
-      for (var i = 0; i < res.data.length; i++) { 
-        myOptions.push(res.data[i]) 
-      } 
-      setMyOptions(myOptions) 
+
+
+  const getDataFromAPI = () => {
+    console.log("Options Fetched from API")
+
+    fetch('http://dummy.restapiexample.com/api/v1/employees').then((response) => {
+      return response.json()
+    }).then((res) => {
+      for (var i = 0; i < res.data.length; i++) {
+        myOptions.push(res.data[i])
+      }
+      setMyOptions(myOptions)
     })
-  } 
+  }
 
   const selectImage = async (file) => {
-    console.log(file)
-    if(file.type.substring(0, 5) != "image") return alert("You must select image file")
+    if (file.type.substring(0, 5) != "image") return alert("You must select image file")
     setImage(file)
-    const formData = new FormData();
-    // formData.append('myImage', file); // this is formdata and file
-    formData.append("target", file)
-    // reader.onload = await function () {
-    //     document = reader.result;
-        // Axios.post('upload', {formData: "sdfsdf", ff:document}).then((res) => {
-        //   if (res.status === 200) {
-        //     console.log(res.data)
-        //     setUserInfo(res.data.data)
-        //   } else {
-    
-        //   }
-        // }).catch((err) => {
-        // });
-        axios({
-          method: "post",
-          url: "upload",
-          data: formData,
-          headers: { "Content-Type": 'multipart/form-data' },
-        })
-          .then(function (response) {
-            //handle success
-            console.log(response);
-          })
-          .catch(function (response) {
-            //handle error
-            console.log(response);
-          });
-    // };
-    // reader.onerror = function (error) {
-    //     return false
-    // };
+    console.log(URL.createObjectURL(file), "temp image url")
+    setTempImage(URL.createObjectURL(file))
   }
-  
+
   const renderMenu = (
-    acctModal?<ClickAwayListener onClickAway={()=>{if(acctModal){ setAcctModal(false)}}} >
-    <Popper
-      open={acctModal}
-      anchorEl={anchorEl}
-      className = "acctModal"
+    acctModal ? <ClickAwayListener onClickAway={(e) => {
+      if (acctModal) { setAcctModal(false) }
+    }} >
+
+      <Popper
+        open={acctModal}
+        anchorEl={anchorEl}
+        className="acctModal"
       >
-          <div className = {classes.logoContainer}>
-              <div className = {classes.logoContent}>
-                {userInfo?.u_name[0]?.toUpperCase()}
-                  <div className = {classes.avataBtnContainer}>
-                      <div onClick={()=>{
-                        openModal("Company")
-                      }}>
-                        <Box className={classes.avatarChgBtn} boxShadow={5}>
-                          <CameraAltIcon style={{color: "gray"}}/>
-                        </Box>
-                      </div>
-                      <div>
-                        <Box className={classes.avatarChgBtn} boxShadow={5}>
-                          <CloseIcon style={{color: "gray"}}/>
-                        </Box>
-                      </div>
-                  </div>
-                  
-              </div>
-              
-              <div className = {classes.logoContent}>
-                {userInfo?.u_company_name[0]?.toUpperCase()}
-                  <div className = {classes.avataBtnContainer}>
-                      <div onClick={()=>{
-                        openModal("Profile")
-                      }}><Box className={classes.avatarChgBtn} boxShadow={5}>
-                          <CameraAltIcon style={{color: "gray"}}/>
-                      </Box>
-                      </div>
-                      <div>
-                      <Box className={classes.avatarChgBtn} boxShadow={5}>
-                          <CloseIcon style={{color: "gray"}}/>
-                      </Box>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          
-          <div className={classes.userNameContainer}>
-              <div className={classes.userNameText}>{userInfo?.u_f_name+" "+userInfo?.u_l_name}</div>
-              <div className={classes.userEmailText}>{userInfo?.u_email}</div>
-          </div>
-          
-          <div className = {classes.manageBtnContainer}>
-              <div className={classes.manageAcctBtn}>
-                      Manage your Google Account
-              </div>
-          </div>
-          <Divider />
-
-          <div className={classes.userInfoTotalContainer}>
-            <div className={classes.userInfoContainer}>
-              <div className="smallAvatar">
-                <div className={"smallAvatarB"}>{userInfo?.u_name[0]?.toUpperCase()}</div>
-              </div>
-              <div className="smallAvatarR">
-                <div className={"smallAvatarY"}>{userInfo?.u_company_name[0]?.toUpperCase()}</div>
-              </div>
-            </div>
+        <Modal
+          aria-labelledby="transition-modal-title"
+          aria-describedby="transition-modal-description"
+          className={classes.modal}
+          open={uploadModal}
+          onClose={() => { setUploadModal(false) }}
+          closeAfterTransition
+        >
+          <Fade in={uploadModal}>
             <div>
-              <div className={classes.userNameSubContainer}>
-                <div className={classes.userNameText}>{userInfo?.u_f_name+" "+userInfo?.u_l_name}</div>
-                <div className={classes.userEmailText}>{userInfo?.u_email}</div>
+              <AppBar position="static" className={classes.appbar}>
+                <Toolbar>
+                  <Typography className={classes.title} variant="h6" noWrap>
+                    Select {targetImage} logo
+                  </Typography>
+                  <div className={classes.grow} />
+                  <IconButton aria-label="show 17 new notifications" color="inherit" onClick={() => { setUploadModal(false) }}>
+                    <CloseIcon style={{ color: "gray" }} />
+                  </IconButton>
+                </Toolbar>
+              </AppBar>
+              {
+                selectedImage ? <div className={classes.paper}>
+                  <div className="avatar-editor-container">
+                    <div className="avatar-previewer">
+                      <AvatarEditor
+                        image={tempImage}
+                        lineWidth={10}
+                        width={250}
+                        height={250}
+                        border={50}
+                        color={[255, 255, 255, 0.6]} // RGBA
+                        scale={zoom}
+                        rotate={rotate}
+                        ref={imageCrop}
+
+                      />
+                    </div>
+                    <div className="editor-controller">
+                      <div onClick={() => { setRotate(rotate - 90) }}><RotateLeftIcon />LEFT</div>
+                      <div onClick={() => { setRotate(rotate + 90) }}><RotateRightIcon />RIGHT</div>
+                      <div><Slider value={zoom} onChange={handleZoom} aria-labelledby="continuous-slider" step={0.1} min={1} max={2.5} />ZOOM</div>
+                      <div></div>
+                    </div>
+                  </div>
+                </div> : <FileDrop
+                  onFrameDragEnter={(event) => console.log('onFrameDragEnter', event)}
+                  onFrameDragLeave={(event) => console.log('onFrameDragLeave', event)}
+                  onFrameDrop={(event) => console.log('onFrameDrop', event)}
+                  onDragOver={(event) => { setDropping(true) }}
+                  onDragLeave={(event) => { setDropping(false) }}
+                  onDrop={(files, event) => { selectImage(files[0]); setDropping(false); }}
+                >
+
+                  <div className={classes.paper}>
+                    <img src={'/image_thumbnail.png'} alt="Logo" />
+                    <h2 id="transition-modal-title" className={classes.noDrag}>{isDropping ? '' : 'Drog a '+ targetImage +' image here'}</h2>
+                    {
+                      isDropping ? <h2 id="transition-modal-title" className={classes.onDrog} >Drop your file here</h2> : null
+                    }
+                    <h5 id="transition-modal-description" style={{ color: 'gray', marginTop: 15 }}>- or -</h5>
+                    <input type="file" ref={fileUploadRef} name="myImage" onChange={e => selectImage(e.target.files[0])} style={{ display: "none" }} />
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      className={classes.cancelBtn}
+                      onClick={() => { fileUploadRef.current.click() }}
+                    >Select a photo from your computer</Button>
+                  </div>
+                </FileDrop>
+              }
+              <AppBar position="static" className={classes.appbar} color="inherit">
+                <Toolbar>
+                  <Button variant="contained" disabled={selectedImage ? false : true} onClick={() => { uploadAvatar() }} >Upload {uploadPercent ? uploadPercent + "%" : null}</Button>
+                  <div style={{ flexGrow: 0.03 }}></div>
+                  <Button variant="outlined" className={classes.cancelBtn} onClick={() => { setUploadModal(false);  setTempImage(''); setImage('') }}>Cancel</Button>
+                </Toolbar>
+              </AppBar>
+            </div>
+          </Fade>
+        </Modal>
+        <div className={classes.logoContainer}>
+          <div className={classes.logoContent}>
+            {userInfo?.userComAvatar ? <img src={serverUrl + userInfo.userComAvatar} alt="comavatar" className="userAvatar" /> : userInfo?.userComName[0]?.toUpperCase()}
+            <div className={classes.avataBtnContainer}>
+              <div onClick={() => {
+                openModal("Company")
+              }}>
+                <Box className={classes.avatarChgBtn} boxShadow={5}>
+                  <Tooltip title="Edit Company Avatar" placement="bottom">
+                    <CameraAltIcon style={{ color: "gray" }} />
+                  </Tooltip>
+                </Box>
+              </div>
+              <div
+                onClick={() => {
+                  openDeleteModal("Company")
+                }}
+              >
+                <Box className={classes.avatarChgBtn} boxShadow={5}>
+                  <Tooltip title="Remove Company Avatar" placement="bottom">
+                    <CloseIcon style={{ color: "gray" }} />
+                  </Tooltip>
+                </Box>
               </div>
             </div>
-            <div>
-              <ExpandMoreIcon/>
+          </div>
+
+          <div className={classes.logoContent}>
+            {userInfo?.userAvatar ? <img src={serverUrl + userInfo.userAvatar} alt="comavatar" className="userAvatar" /> : userInfo?.userName[0]?.toUpperCase()}
+            {/* {userInfo?userCo} */}
+            <div className={classes.avataBtnContainer}>
+              <div onClick={() => {
+                openModal("Profile")
+              }}><Box className={classes.avatarChgBtn} boxShadow={5}>
+                  <Tooltip title="Remove User Avatar" placement="bottom">
+                    <CameraAltIcon style={{ color: "gray" }} />
+                  </Tooltip>
+                </Box>
+              </div>
+              <div
+                onClick={() => {
+                  openDeleteModal("Profile")
+                }}
+              >
+                <Box className={classes.avatarChgBtn} boxShadow={5}>
+                  <Tooltip title="Remove User Avatar" placement="bottom">
+                    <CloseIcon style={{ color: "gray" }} />
+                  </Tooltip>
+                </Box>
+              </div>
             </div>
           </div>
-          <Divider />
-          <div className={classes.signOutButtonContainer}>
-            <Button variant="outlined">Sign Out</Button>
+        </div>
+
+        <div className={classes.userNameContainer}>
+          <div className={classes.userNameText}>{userInfo?.userName}</div>
+          <div className={classes.userEmailText}>{userInfo?.userEmail}</div>
+        </div>
+
+        <div className={classes.manageBtnContainer}>
+          <div className={classes.manageAcctBtn}>
+            Manage your Google Account
           </div>
-    </Popper>
-    </ClickAwayListener>:null
-);
- const notiClick = ()=>{
-  // var query = "UPDATE data SET name='"+data.data.name+"', price='"+data.data.price+"', res_name='"+data.data.res_name+"' WHERE id='"+data.data.org_id+"'";
-  // await con.query(query, (err, result, fields) => {
-  //     if (err) throw err;
-  //     console.log(result)
-  // });
- }
-const renderNotifications = (
-  notiModal?<ClickAwayListener onClickAway={()=>{if(notiModal){ setNotiModal(false)}}} >
-  <Popper
-    open={notiModal}
-    anchorEl={anchorNoti}
-    className = "notiMenu"
-    >
-      {nodifiedState.map((item, index) => (
-        <ListItem key={`item-`} button className={classes.notiClicked} onClick={()=>{notiClick(item.noti_id)}}>
-          <ListItemText primary={item.noti_content}  secondary={new Date(item.noti_created_at).toUTCString().substring(0, 22)} className="noti-date"/>
-        </ListItem>
-      ))}
-  </Popper>
-  </ClickAwayListener>:null
-);
+        </div>
+        <Divider />
 
+        <div className={classes.userInfoTotalContainer}>
+          <div className={classes.userInfoContainer}>
+            <div className="smallAvatar">
+              <div className={"smallAvatarB"}>{userInfo?.userComAvatar ? <img src={serverUrl + userInfo.userComAvatar} alt="comavatar" className="userAvatar" /> : userInfo?.userComName[0]?.toUpperCase()}</div>
+            </div>
+            <div className="smallAvatarR">
+              <div className={"smallAvatarY"}>{userInfo?.userAvatar ? <img src={serverUrl + userInfo.userAvatar} alt="comavatar" className="userAvatar" /> : userInfo?.userName[0]?.toUpperCase()}</div>
+            </div>
+          </div>
+          <div>
+            <div className={classes.userNameSubContainer}>
+              <div className={classes.userNameText}>{userInfo?.userName}</div>
+              <div className={classes.userEmailText}>{userInfo?.userEmail}</div>
+            </div>
+          </div>
+          <div>
+            <ExpandMoreIcon />
+          </div>
+        </div>
+        <Divider />
+        <div className={classes.signOutButtonContainer} onClick={signout}>
+          <Button variant="outlined">Sign Out</Button>
+        </div>
+      </Popper>
+    </ClickAwayListener> : null
+  );
+  const notiClick = (id) => {
+    var user = JSON.parse(localStorage.getItem('bootstrap'));
+    Axios.post('readNoti', { userId: user.userId, noti_id: id }).then(res => {
+      getNewNoti();
+    })
+  }
+  const checkRead = (id) => {
+    var flag = false;
+    newNoti.map(newItem => {
+      if (newItem.u_no_id == id) flag = true;
+    })
+    return flag;
+  }
+  const ownerCheck = (id) => {
+    var flag = false;
+    const userInfo = JSON.parse(localStorage.getItem("bootstrap"));
 
+    newNoti.map(newItem => {
+      if (newItem.u_no_id == id && newItem.u_u_id == userInfo.userId && newItem.clicked == 2) flag = true;
+    })
+    return flag;
+  }
+  const renderNotifications = (
+    notiModal ? <ClickAwayListener onClickAway={() => { if (notiModal) { setNotiModal(false) } }}>
+      <Popper
+        open={notiModal}
+        anchorEl={anchorNoti}
+        className="notiMenu"
+        onScroll={(e) => { intinitScroll(e) }}
+      >
+        {nodifiedState.map((item, index) => (
+          !ownerCheck(item.noti_id) ? checkRead(item.noti_id) ? <ListItem key={`item-${item.noti_id}`} button className={classes.notiClicked} onClick={() => { notiClick(item.noti_id) }}>
+            <ListItemText primary={item.noti_content} secondary={new Date(item.noti_created_at).toUTCString().substring(0, 22)} className="noti-date" />
+          </ListItem> : <ListItem key={`item-${item.noti_id}`} button className={classes.notiClicked} selected onClick={() => { notiClick(item.noti_id) }}>
+            <ListItemText primary={item.noti_content} secondary={new Date(item.noti_created_at).toUTCString().substring(0, 22)} className="noti-date" />
+          </ListItem> : null
+        ))}
+      </Popper>
+    </ClickAwayListener> : null
+  );
 
   const renderMenu2 = (
     <Menu
@@ -642,61 +892,36 @@ const renderNotifications = (
 
   return (
     <div className={classes.grow}>
+
       <Modal
         aria-labelledby="transition-modal-title"
         aria-describedby="transition-modal-description"
         className={classes.modal}
-        open={uploadModal}
-        onClose={()=>{setUploadModal(false)}}
+        open={deleteModal}
+        onClose={() => { setDeleteModal(false) }}
         closeAfterTransition
       >
-        <Fade in={uploadModal}>
-          <div>
-          <AppBar position="static" className={classes.appbar}>
-            <Toolbar>
-            <Typography className={classes.title} variant="h6" noWrap>
-              Select {targetImage} logo
-            </Typography>
-            <div className={classes.grow} />
-            <IconButton aria-label="show 17 new notifications" color="inherit" onClick={()=>{setUploadModal(false)}}>
-              <CloseIcon style={{color: "gray"}}/>
-            </IconButton>
-            </Toolbar>
-          </AppBar>
-          <FileDrop
-              onFrameDragEnter={(event) => console.log('onFrameDragEnter', event)}
-              onFrameDragLeave={(event) => console.log('onFrameDragLeave', event)}
-              onFrameDrop={(event) => console.log('onFrameDrop', event)}
-              onDragOver={(event) => console.log('onDragOver', event)}
-              onDragLeave={(event) => console.log('onDragLeave', event)}
-              onDrop={(files, event) => selectImage(files[0])}
-            >
-
-          <div className={classes.paper}>
-            <img src={'/image_thumbnail.png'} alt="Logo" />
-            <h2 id="transition-modal-title" style={{color: 'gray', marginTop: 30}}>Drog a {targetImage} image here</h2>
-            <h5 id="transition-modal-description" style = {{color: 'gray', marginTop: 15}}>- or -</h5>
-            <input type="file" ref={fileUploadRef} name="myImage" onChange= {e=>selectImage(e.target.files[0])} style={{display: "none"}}/>
+        <div className="confirmModal">
+          <div className="confirmTitle">Are you sure to delete this image?</div>
+          <div className="confirmButtons">
             <Button
               variant="outlined"
               color="primary"
               className={classes.cancelBtn}
-              onClick = {()=>{fileUploadRef.current.click()}}
-            >Select a photo from your computer</Button>
+              onClick={() => { setDeleteModal(false) }}
+            >No</Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              className={classes.cancelBtn}
+              onClick={() => { deleteImage() }}
+            >Yes</Button>
           </div>
-          </FileDrop>
-          
-          <AppBar position="static" className={classes.appbar} color="inherit">
-          <Toolbar>
-            <Button variant="contained" color="primary" disabled >Set as Default</Button>
-            <div style={{flexGrow: 0.03}}></div>
-            <Button variant="outlined" className={classes.cancelBtn}>Cancel</Button>
-          </Toolbar>
-          </AppBar>
-          </div>
-        </Fade>
-      </Modal>
+        </div>
 
+
+
+      </Modal>
 
 
 
@@ -706,36 +931,36 @@ const renderNotifications = (
             Wesy
           </Typography>
           <Autocomplete
-                style={{ width: 300 }}
-                freeSolo
-                className={classes.inputRoot}
-                autoComplete
-                autoHighlight
-                options={myOptions}
-                // filterOptions={filterOptions}
-                getOptionLabel={option => option.employee_name}
-                renderOption={option => {
-                  return (
-                    <div>
-                      <i className="fa fa-bell" aria-hidden="true"></i>
-                      {option.employee_name + ' bella'}
-                    </div>
-                  );
-                }}
-                renderInput={(params) => ( 
-                  <div className={classes.search}>
-                    <div className={classes.searchIcon}>
-                      <SearchIcon />
-                  </div>
-                  <TextField 
-                    variant="outlined"
-                    onChange={getDataFromAPI} 
-                    placeholder="Cerca collaboratore"
-                    {...params} 
-                  /> 
-                  </div>
-                )} 
-              /> 
+            style={{ width: 300 }}
+            freeSolo
+            className={classes.inputRoot}
+            autoComplete
+            autoHighlight
+            options={myOptions}
+            // filterOptions={filterOptions}
+            getOptionLabel={option => option.employee_name}
+            renderOption={option => {
+              return (
+                <div>
+                  <i className="fa fa-bell" aria-hidden="true"></i>
+                  {option.employee_name + ' bella'}
+                </div>
+              );
+            }}
+            renderInput={(params) => (
+              <div className={classes.search}>
+                <div className={classes.searchIcon}>
+                  <SearchIcon />
+                </div>
+                <TextField
+                  variant="outlined"
+                  onChange={getDataFromAPI}
+                  placeholder="Cerca collaboratore"
+                  {...params}
+                />
+              </div>
+            )}
+          />
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton
@@ -757,10 +982,10 @@ const renderNotifications = (
               color="inherit"
               className={classes.iconCompany}
             >
-              {/* <AccountCircle /> */}
-              <div className = {classes.NavBarlogoContent}>
+              <AccountCircle />
+              {/* <div className = {classes.NavBarlogoContent}>
                 {userInfo?.u_company_name?userInfo?.u_company_name[0]?.toUpperCase():null}
-              </div>
+              </div> */}
             </IconButton>
           </div>
           <div className={classes.sectionMobile}>

@@ -20,7 +20,6 @@ function TableCom(props) {
       var flag = false
       props.modiList.map((modi, index)=>{
         var modiColIndex = null
-        
         if(modi.updatedId == row.org_id){
           
           if(modi?.updatedColumn?.indexOf(columns[colIndex].dataField) >= 0){

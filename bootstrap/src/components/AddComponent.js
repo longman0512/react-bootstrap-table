@@ -11,18 +11,10 @@ function AppCom(props) {
     const [endDate, setEnd] = React.useState(new Date());
     const [startDate, setStartDate] = React.useState(new Date());
     const add = ()=>{
-        if(!name){
-            alert("Please insert a name")
-            return false
-        }
-        if(!price || price < 0){
-            alert("Please insert correct price")
-            return false
-        }
         setName("")
         setPrice("")
         setRes('')
-        props.addS({name: name, price: price, res_name: res})
+        props.openModal(true)
     }
 
   return (
@@ -48,12 +40,8 @@ function AppCom(props) {
             </tr>
             <tr>
                 <td></td>
-                <td><Form.Control type="text" value={name} onChange={(t)=>{setName(t.target.value)}} placeholder="Product Name" /></td>
-                <td><Form.Control type="number" value={price} onChange={(t)=>{setPrice(t.target.value)}} placeholder="Product Price" /></td>
-                <td><Button variant="success" onClick={add}>Add</Button>{' '}</td>
-                {
-                    props?.rows?.length?<td><Button variant="success" onClick={props.deleteRow}>Deleted</Button>{' '}</td>:null
-                }
+                <td></td>
+                <td colSpan={2}><Button variant="success" onClick={add}>Add Product</Button>{' '}</td>
             </tr>
         </tbody>
     </Table>
