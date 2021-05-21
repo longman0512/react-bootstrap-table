@@ -261,7 +261,9 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative'
+    position: 'relative',
+    height: '100%',
+    width: '100%'
   },
   paper: {
     backgroundColor: "white",
@@ -662,11 +664,11 @@ export default function PrimarySearchAppBar() {
                     </div>
                   </div>
                 </div> : <FileDrop
-                  onFrameDragEnter={(event) => console.log('onFrameDragEnter', event)}
-                  onFrameDragLeave={(event) => console.log('onFrameDragLeave', event)}
-                  onFrameDrop={(event) => console.log('onFrameDrop', event)}
-                  onDragOver={(event) => { setDropping(true) }}
-                  onDragLeave={(event) => { setDropping(false) }}
+                  onFrameDragEnter={(event) => console.log('onFrameDragEnter')}
+                  onFrameDragLeave={(event) => setDropping(false)}
+                  onFrameDrop={(event) => console.log('onFrameDrop')}
+                  onDragOver={(event) => {console.log('DragOver'); setDropping(true) }}
+                  onDragLeave={(event) => {console.log('DragLeave');  }}
                   onDrop={(files, event) => { selectImage(files[0]); setDropping(false); }}
                 >
 
@@ -766,10 +768,10 @@ export default function PrimarySearchAppBar() {
         <div className={classes.userInfoTotalContainer}>
           <div className={classes.userInfoContainer}>
             <div className="smallAvatar">
-              <div className={"smallAvatarB"}>{userInfo?.userComAvatar ? <img src={serverUrl + userInfo.userComAvatar} alt="comavatar" className="userAvatar" /> : userInfo?.userComName[0]?.toUpperCase()}</div>
+              <div className={"smallAvatarB"}>{userInfo?.userComAvatar ? <img src={'/banner2.png'} alt="comavatar" className="userAvatar" /> : userInfo?.userComName[0]?.toUpperCase()}</div>
             </div>
             <div className="smallAvatarR">
-              <div className={"smallAvatarY"}>{userInfo?.userAvatar ? <img src={serverUrl + userInfo.userAvatar} alt="comavatar" className="userAvatar" /> : userInfo?.userName[0]?.toUpperCase()}</div>
+              <div className={"smallAvatarY"}>{userInfo?.userAvatar ? <img src={'/banner1.png'} alt="comavatar" className="userAvatar" /> : userInfo?.userName[0]?.toUpperCase()}</div>
             </div>
           </div>
           <div>
